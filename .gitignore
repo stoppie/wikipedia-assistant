@@ -169,3 +169,6 @@ crash.log
 
 # Credentials directory
 credentials/
+
+# Other files
+project_hierarchy.txt

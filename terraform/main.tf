@@ -1,8 +1,18 @@
-provider "google" {
-  project = "wikipedia-assistant-397017"
-  region  = "us-central1"
+# Provider Configuration
+terraform {
+  required_providers {
+    google = "~> 4.0"
+  }
 }
 
+provider "google" {
+  project = local.project_id
+  region  = local.region
+}
+
+# Networking
+
+# VPC Network Configuration
 resource "google_compute_network" "wiki_assistant_vpc" {
   name                    = "wiki-assistant-vpc"
   auto_create_subnetworks = true
@@ -10,6 +20,7 @@ resource "google_compute_network" "wiki_assistant_vpc" {
   routing_mode            = "REGIONAL"
 }
 
+# Private IP Configuration for VPC Peering
 resource "google_compute_global_address" "private_ip_address" {
   name          = "wiki-assistant-private-ip-range"
   purpose       = "VPC_PEERING"
@@ -18,45 +29,49 @@ resource "google_compute_global_address" "private_ip_address" {
   network       = google_compute_network.wiki_assistant_vpc.self_link
 }
 
+# Private VPC Connection Configuration
 resource "google_service_networking_connection" "private_vpc_connection" {
   network                 = google_compute_network.wiki_assistant_vpc.self_link
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 }
 
+# Firewall Rules
+
+# ICMP Firewall Rule
 resource "google_compute_firewall" "wiki_assistant_allow_icmp" {
-  name    = "wiki-assistant-vpc-allow-icmp"
-  network = google_compute_network.wiki_assistant_vpc.name
-
-  allow {
-    protocol = "icmp"
-  }
-
+  name          = "wiki-assistant-vpc-allow-icmp"
+  network       = google_compute_network.wiki_assistant_vpc.name
   description   = "Allows ICMP connections from any source to any instance on the network."
   direction     = "INGRESS"
   priority      = 65534
   source_ranges = ["0.0.0.0/0"]
+  allow {
+    protocol = "icmp"
+  }
 }
 
+# SSH Firewall Rule
 resource "google_compute_firewall" "wiki_assistant_allow_ssh" {
-  name    = "wiki-assistant-vpc-allow-ssh"
-  network = google_compute_network.wiki_assistant_vpc.name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
-
+  name          = "wiki-assistant-vpc-allow-ssh"
+  network       = google_compute_network.wiki_assistant_vpc.name
   description   = "Allows TCP connections from any source to any instance on the network using port 22."
   direction     = "INGRESS"
   priority      = 65534
   source_ranges = ["0.0.0.0/0"]
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
 }
 
+# Database Configuration
+
+# SQL Database Instance Configuration
 resource "google_sql_database_instance" "wiki_assistant_db" {
   name             = "wiki-assistant-db"
   database_version = "MYSQL_8_0_31"
-  region           = "us-central1"
+  region           = local.region
   root_password    = var.mysql_root_password
 
   settings {
