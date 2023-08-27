@@ -174,7 +174,7 @@ resource "google_compute_instance" "wiki_assistant_sql_connector" {
 
   service_account {
     email  = "872434643787-compute@developer.gserviceaccount.com"
-    scopes = ["https://www.googleapis.com/auth/devstorage.read_only", "https://www.googleapis.com/auth/logging.write", "https://www.googleapis.com/auth/monitoring.write", "https://www.googleapis.com/auth/service.management.readonly", "https://www.googleapis.com/auth/servicecontrol", "https://www.googleapis.com/auth/sqlservice.admin", "https://www.googleapis.com/auth/trace.append"]
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 
   shielded_instance_config {

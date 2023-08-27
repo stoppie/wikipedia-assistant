@@ -1,4 +1,4 @@
-output "mysql_ip_address" {
+output "db_ip_address" {
   description = "IP Address for the Wiki Assistant Database Instance"
   value       = google_sql_database_instance.wiki_assistant_db.ip_address[0].ip_address
 }
