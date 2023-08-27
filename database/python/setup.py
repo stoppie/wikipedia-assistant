@@ -1,66 +1,89 @@
 import mysql.connector
 import sys
+import argparse
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
-def setup_database(
-    host: str,
-    user: str,
-    password: str,
-    database_name: str,
-    database_user: str,
-    database_user_pwd: str,
-) -> None:
-    # Create the connection
-    conn = mysql.connector.connect(host=host, user=user, password=password)
+def create_database(cursor, db_name):
+    cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name};")
 
-    cursor = conn.cursor()
 
-    # 1. Create the database
-    create_db_query = f"CREATE DATABASE {database_name};"
-    cursor.execute(create_db_query)
-
-    # 2. Create the user
-    create_user_query = (
-        f"CREATE USER '{database_user}'@'%' IDENTIFIED BY '{database_user_pwd}';"
+def create_user(cursor, username, password):
+    cursor.execute(
+        "CREATE USER IF NOT EXISTS %s@'%' IDENTIFIED BY %s;", (username, password)
     )
-    cursor.execute(create_user_query)
 
-    # 3. Grant privileges to the user for the database
-    grant_privileges_query = f"GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP ON {database_name}.* TO '{database_user}'@'%';"
-    cursor.execute(grant_privileges_query)
 
-    # 4. Flush privileges to ensure they are applied
-    cursor.execute("FLUSH PRIVILEGES;")
+def grant_privileges(cursor, privileges, db_name, username):
+    query = f"GRANT {privileges} ON {db_name}.* TO %s@'%';"
+    cursor.execute(query, (username,))
 
-    # Close the connection
-    cursor.close()
-    conn.close()
+
+def setup_database(args):
+    try:
+        conn = mysql.connector.connect(
+            host=args.host, user=args.root_user, password=args.root_password
+        )
+
+        cursor = conn.cursor()
+
+        # 1. Create the databases
+        for db_name in [args.database_prod_name, args.database_staging_name]:
+            create_database(cursor, db_name)
+
+        # 2. Create the users
+        create_user(cursor, args.database_dev_user, args.database_dev_user_pwd)
+        create_user(cursor, args.database_api_user, args.database_api_user_pwd)
+
+        # 3. Grant privileges to the users for the databases
+        grant_privileges(
+            cursor,
+            "SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, REFERENCES",
+            args.database_prod_name,
+            args.database_dev_user,
+        )
+        grant_privileges(
+            cursor,
+            "SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, REFERENCES",
+            args.database_staging_name,
+            args.database_dev_user,
+        )
+        grant_privileges(
+            cursor, "SELECT", args.database_prod_name, args.database_api_user
+        )
+
+        # 4. Flush privileges
+        cursor.execute("FLUSH PRIVILEGES;")
+
+        cursor.close()
+        conn.close()
+
+        logging.info("Database setup completed!")
+
+    except mysql.connector.Error as err:
+        logging.error(f"MySQL Error: {err}")
+        sys.exit(1)
+
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 6:
-        print(
-            "Usage: python3 setup.py <DB_HOST> <ROOT_PASSWORD> <DB_NAME> <DB_USER> <DB_USER_PASSWORD>"
-        )
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Setup MySQL databases and users.")
+    parser.add_argument("host", type=str, help="Database host.")
+    parser.add_argument("root_password", type=str, help="Root password.")
+    parser.add_argument("database_prod_name", type=str, help="Production DB name.")
+    parser.add_argument("database_staging_name", type=str, help="Staging DB name.")
+    parser.add_argument("database_dev_user", type=str, help="Dev user name.")
+    parser.add_argument("database_dev_user_pwd", type=str, help="Dev user password.")
+    parser.add_argument("database_api_user", type=str, help="API user name.")
+    parser.add_argument("database_api_user_pwd", type=str, help="API user password.")
 
-    (
-        _,
-        DATABASE_HOST,
-        ROOT_PASSWORD,
-        DATABASE_NAME,
-        DATABASE_USER,
-        DATABASE_USER_PWD,
-    ) = sys.argv
+    args = parser.parse_args()
 
-    ROOT_USER = "root"
+    args.root_user = "root"
 
-    setup_database(
-        DATABASE_HOST,
-        ROOT_USER,
-        ROOT_PASSWORD,
-        DATABASE_NAME,
-        DATABASE_USER,
-        DATABASE_USER_PWD,
-    )
-    print("Database setup completed!")
+    setup_database(args)
