@@ -152,7 +152,7 @@ resource "google_compute_instance" "wiki_assistant_sql_connector" {
   machine_type = "e2-micro"
 
   metadata = {
-    startup-script = "sudo apt update\nsudo apt install -y default-mysql-client"
+    startup-script = "sudo apt update\nsudo apt install -y default-mysql-client pip python3-venv"
   }
 
   name = "wiki-assistant-sql-connector"
