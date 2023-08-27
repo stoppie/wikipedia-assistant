@@ -3,8 +3,13 @@ locals {
   region     = "us-central1"
 }
 
-variable "mysql_root_password" {
-  description = "MySQL database password"
+data "google_secret_manager_secret_version" "db_password" {
+  secret  = "wiki-assistant-db-root-password"
+  version = "latest"
+}
+
+variable "source_ip" {
+  description = "Source IP address to allow SSH access."
   type        = string
   sensitive   = true
 }

@@ -55,10 +55,10 @@ resource "google_compute_firewall" "wiki_assistant_allow_icmp" {
 resource "google_compute_firewall" "wiki_assistant_allow_ssh" {
   name          = "wiki-assistant-vpc-allow-ssh"
   network       = google_compute_network.wiki_assistant_vpc.name
-  description   = "Allows TCP connections from any source to any instance on the network using port 22."
+  description   = "Allows TCP connections from a specific source to any instance on the network using port 22."
   direction     = "INGRESS"
   priority      = 65534
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = [var.source_ip]
   allow {
     protocol = "tcp"
     ports    = ["22"]
@@ -72,7 +72,7 @@ resource "google_sql_database_instance" "wiki_assistant_db" {
   name             = "wiki-assistant-db"
   database_version = "MYSQL_8_0_31"
   region           = local.region
-  root_password    = var.mysql_root_password
+  root_password    = data.google_secret_manager_secret_version.db_password.secret_data
 
   settings {
     tier                        = "db-custom-1-3840"
@@ -122,4 +122,68 @@ resource "google_sql_database_instance" "wiki_assistant_db" {
   }
 
   timeouts {}
+}
+
+# Compute Instances Configuration
+
+# SQL Connector Instance
+resource "google_compute_instance" "wiki_assistant_sql_connector" {
+  boot_disk {
+    auto_delete = true
+    device_name = "wiki-assistant-sql-connector"
+
+    initialize_params {
+      image = "projects/debian-cloud/global/images/debian-12-bookworm-v20230814"
+      size  = 10
+      type  = "pd-balanced"
+    }
+
+    mode = "READ_WRITE"
+  }
+
+  can_ip_forward      = false
+  deletion_protection = false
+  enable_display      = false
+
+  labels = {
+    goog-ec-src = "vm_add-tf"
+  }
+
+  machine_type = "e2-micro"
+
+  metadata = {
+    startup-script = "sudo apt update\nsudo apt install -y default-mysql-client"
+  }
+
+  name = "wiki-assistant-sql-connector"
+
+  network_interface {
+    access_config {
+      network_tier = "PREMIUM"
+    }
+
+    subnetwork = "projects/wikipedia-assistant-397017/regions/us-central1/subnetworks/wiki-assistant-vpc"
+  }
+
+  scheduling {
+    automatic_restart   = true
+    on_host_maintenance = "MIGRATE"
+    preemptible         = false
+    provisioning_model  = "STANDARD"
+  }
+
+  service_account {
+    email  = "872434643787-compute@developer.gserviceaccount.com"
+    scopes = ["https://www.googleapis.com/auth/devstorage.read_only", "https://www.googleapis.com/auth/logging.write", "https://www.googleapis.com/auth/monitoring.write", "https://www.googleapis.com/auth/service.management.readonly", "https://www.googleapis.com/auth/servicecontrol", "https://www.googleapis.com/auth/sqlservice.admin", "https://www.googleapis.com/auth/trace.append"]
+  }
+
+  shielded_instance_config {
+    enable_integrity_monitoring = true
+    enable_secure_boot          = false
+    enable_vtpm                 = true
+  }
+
+  tags                      = ["https-server"]
+  zone                      = "us-central1-b"
+  allow_stopping_for_update = true
 }
