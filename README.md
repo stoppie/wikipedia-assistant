@@ -10,7 +10,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
   
 - **Update Protocol:** Updates are scheduled monthly, aligning with Wikimedia's dump release frequency.
 
-- **Data Organization:** Distinct databases house raw and processed data to simplify management and data distinction.
+- **Database Designation:** Two distinct databases differentiate production (`wiki_assistant`) and staging (`wiki_staging`) data.
 
 - **API Capabilities:** The API returns predefined query results and also offers flexibility for custom SELECT queries.
 
@@ -23,8 +23,6 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
   * The `categoryoutdated` table sorts pages based on outdatedness within categories, pinpointing the most outdated page per category.
 
 - **Data Handling:** Uniform files and scripts cater to both initial data configuration and periodic refreshes.
-
-- **Database Designation:** Two distinct databases differentiate production (`wiki_assistant`) and staging (`wiki_staging`) data.
 
 - **Deployment Strategy:** The API, hosted on Cloud Run Service, benefits from managed security and scalability.
 
@@ -42,11 +40,9 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 
 4. **Guarding Against SQL Injection:** The API's custom SQL endpoint only supports SELECT queries, reducing SQL injection threats.
 
-5. **Infrastructure Transparency:** Utilizing Terraform ensures infrastructure setup consistency and clarity.
+5. **Security Measures:** Despite the public nature of Wikimedia data, the database is designed without public exposure, emphasizing best data security practices.
 
-6. **Security Measures:** Despite the public nature of Wikimedia data, the database is designed without public exposure, emphasizing best data security practices.
-
-7. **Network Rules:** Firewall configurations include:
+6. **Network Rules:** Firewall configurations include:
    * ICMP: Allows ICMP traffic.
    * SSH: Permits SSH access solely from a designated source IP.
 
