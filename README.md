@@ -4,28 +4,51 @@
 
 The Wikipedia Assistant solution provides an automated way to download, preprocess, and store Simple English Wikipedia data in a structured MySQL database hosted on Google's Cloud SQL service. Furthermore, an API, served on Google Cloud Run, exposes data from this database to fulfill specific query requirements. Scheduled updates to the database are facilitated using Google Cloud Scheduler, and the solution is easily deployable thanks to infrastructure-as-code principles and containerization.
 
-## 2. Assumptions and Simplifications
+## 2. Technical Details and Assumptions
 
-- The choice of MySQL for the database solution, given the structured nature of the data and the compatibility with the Wiki dump files created by MariaDB.
-- The periodic updates are set to occur monthly, based on the dump frequency from Wikimedia.
-- While the Wikimedia data used in this project is public, the database is configured without public exposure as a demonstration of best practices for data security. This design choice showcases the capability to build a solution with heightened security considerations.
-- Raw and processed data are kept in separate databases to segregate data and simplify management.
-- The provided API serves predefined query results, with some flexibility for custom SELECT queries.
-- **Data Integrity in Raw Tables:** It is observed that the raw `pagelinks` and `categorylinks` tables contain some rows where the `page_id` does not have a corresponding entry in the `page` table. Specifically, this discrepancy exists for a singular `page_id`. The foreign key constraint would thus be violated when attempting standard insertions. As a workaround, the `INSERT IGNORE INTO` statement is utilized when populating the `pagelinks` and `categorylinks` tables. While effective for the current setup, it's vital to note that this is not an ideal solution for a production environment and requires further refinements to address potential data integrity concerns.
+- **Database Selection:** MySQL was chosen due to its structured data handling capabilities and compatibility with Wiki dump files produced by MariaDB.
+  
+- **Update Protocol:** Updates are scheduled monthly, aligning with Wikimedia's dump release frequency.
 
-With the aforementioned strategy, the `INSERT IGNORE INTO` mechanism serves a dual purpose: 
-1. It aids in the monthly refresh process by ensuring only new rows are added.
-2. It circumvents the constraint violation for the specific `page_id` without a corresponding entry in the `page` table.
+- **Data Organization:** Distinct databases house raw and processed data to simplify management and data distinction.
+
+- **API Capabilities:** The API returns predefined query results and also offers flexibility for custom SELECT queries.
+
+- **Data Integrity and Constraints:** The raw `pagelinks` and `categorylinks` tables have discrepancies. Specifically, certain rows in these tables reference a `page_id` that doesn't exist in the `page` table. The `INSERT IGNORE INTO` statement is employed to bypass foreign key constraint violations. However, this method, though functional now, isn't ideal for long-term production use.
+
+- **Database Relationships:** `pagelinks` and `categorylinks` tables include foreign keys linking to the `page` table, enhancing data consistency.
+
+- **Data Processes:** 
+  * The `pageoutdatedness` table is formed by gauging the maximum time gap between updates of related pages.
+  * The `categoryoutdated` table sorts pages based on outdatedness within categories, pinpointing the most outdated page per category.
+
+- **Data Handling:** Uniform files and scripts cater to both initial data configuration and periodic refreshes.
+
+- **Database Designation:** Two distinct databases differentiate production (`wiki_assistant`) and staging (`wiki_staging`) data.
+
+- **Deployment Strategy:** The API, hosted on Cloud Run Service, benefits from managed security and scalability.
+
+- **Infrastructure Oversight:** Terraform outlines the infrastructure, ensuring auditable, versioned changes.
 
 ## 3. Implemented Security Measures
 
-1. **Private IP for Database:** The Cloud SQL instance has only a private IP, ensuring no public access and thus increasing security.
-2. **Restricted VM Access:** Access to the virtual machine (used for database tasks) is restricted to only one external IP address.
-3. **Database Users and Roles:** Two distinct users are created:
-- `wiki_user`: Maintains the databases.
-- `api_user`: Has read-only access, ensuring the API cannot inadvertently modify data.
-4. **SQL Injection Prevention:** The API endpoint accepting arbitrary SQL is limited to SELECT queries, mitigating potential SQL injection risks.
-5. **Infrastructure as Code:** By using Terraform, we ensure reproducibility and transparency in our infrastructure setup.
+1. **Database Accessibility:** The Cloud SQL instance is bound only to a private IP, bolstering security by prohibiting public access.
+  
+2. **VM Access Control:** The virtual machine, instrumental for database operations, accepts connections solely from a specific external IP.
+
+3. **User Management:** Two database users with distinct roles are established:
+   - `wiki_user`: Manages the databases.
+   - `api_user`: Has read-only privileges, ensuring the API remains non-intrusive.
+
+4. **Guarding Against SQL Injection:** The API's custom SQL endpoint only supports SELECT queries, reducing SQL injection threats.
+
+5. **Infrastructure Transparency:** Utilizing Terraform ensures infrastructure setup consistency and clarity.
+
+6. **Security Measures:** Despite the public nature of Wikimedia data, the database is designed without public exposure, emphasizing best data security practices.
+
+7. **Network Rules:** Firewall configurations include:
+   * ICMP: Allows ICMP traffic.
+   * SSH: Permits SSH access solely from a designated source IP.
 
 ## 4. Requirements
 
