@@ -187,3 +187,80 @@ resource "google_compute_instance" "wiki_assistant_sql_connector" {
   zone                      = "us-central1-b"
   allow_stopping_for_update = true
 }
+
+# Cloud Run Configuration
+
+# Docker Image
+resource "google_artifact_registry_repository" "wiki_assistant_repo" {
+  location      = "us-central1"
+  repository_id = "wiki-assistant-repo"
+  description   = "Docker repository for the Wiki Assistant app."
+  format        = "DOCKER"
+}
+
+# Cloud Run Service Configuration
+resource "google_cloud_run_v2_service" "wiki_assistant_service" {
+  client   = "cloud-console"
+  name     = "wiki-assistant"
+  location = "us-central1"
+
+  template {
+    vpc_access {
+      egress = "PRIVATE_RANGES_ONLY"
+    }
+
+    containers {
+      image = "us-central1-docker.pkg.dev/wikipedia-assistant-397017/wiki-assistant-repo/wiki-assistant@sha256:cf697fb44d7c8ce1c6b471df8cea27bd6799ba5317cd91f6c7de20cb12ad596c"
+
+      resources {
+        cpu_idle = true
+        limits = {
+          memory = "128Mi"
+          cpu    = "1000m"
+        }
+      }
+
+      env {
+        name  = "PROJECT_ID"
+        value = "wikipedia-assistant-397017"
+      }
+
+      env {
+        name  = "SECRET_VERSION"
+        value = "wiki-assistant-db-api-user-password"
+      }
+
+      env {
+        name  = "DATABASE_HOSTNAME"
+        value = "wiki-assistant-db"
+      }
+
+      env {
+        name = "MYSQL_PWD"
+        value_source {
+          secret_key_ref {
+            secret  = data.google_secret_manager_secret_version.api_user.secret
+            version = "latest"
+          }
+        }
+      }
+    }
+
+    max_instance_request_concurrency = 10
+    service_account                  = "872434643787-compute@developer.gserviceaccount.com"
+  }
+
+  traffic {
+    percent = 100
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+  }
+
+  timeouts {}
+}
+
+resource "google_cloud_run_v2_service_iam_binding" "wiki_assistant_service_public" {
+  name     = google_cloud_run_v2_service.wiki_assistant_service.name
+  location = google_cloud_run_v2_service.wiki_assistant_service.location
+  role     = "roles/run.invoker"
+  members  = ["allUsers"]
+}
