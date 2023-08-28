@@ -19,7 +19,6 @@ gcloud compute ssh --zone $ZONE $INSTANCE_NAME --command="
     export DATABASE_DEV_USER_PWD=\$(gcloud secrets versions access latest --secret='wiki-assistant-db-wiki-user-password')
     export DATABASE_API_USER_PWD=\$(gcloud secrets versions access latest --secret='wiki-assistant-db-api-user-password')
 
-    
     # Define the database names.
     export DATABASE_PROD_NAME='wiki_assistant'
     export DATABASE_STAGING_NAME='wiki_staging'
@@ -40,4 +39,3 @@ gcloud compute ssh --zone $ZONE $INSTANCE_NAME --command="
     # Execute the Python script to set up the MySQL database using the retrieved and defined parameters.
     python3 setup.py \$DATABASE_IP_ADDRESS \$MYSQL_PWD \$DATABASE_PROD_NAME \$DATABASE_STAGING_NAME \$DATABASE_DEV_USER \$DATABASE_DEV_USER_PWD \$DATABASE_API_USER \$DATABASE_API_USER_PWD
 "
-

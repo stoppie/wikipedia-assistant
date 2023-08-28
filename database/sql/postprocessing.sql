@@ -35,24 +35,24 @@ SELECT
     page_namespace,
     page_title,
     STR_TO_DATE(CONVERT(page_touched USING utf8), '%Y%m%d%H%i%s')
-FROM `wiki_staging`.`page`;
+FROM `wiki_staging`.`page`
+ON DUPLICATE KEY UPDATE 
+  page_namespace = VALUES(page_namespace),
+  page_title = VALUES(page_title),
+  page_touched = VALUES(page_touched);
 
-INSERT INTO `categorylinks` (`cl_from`, `cl_to`)
+INSERT IGNORE INTO `categorylinks` (`cl_from`, `cl_to`) -- PAGE_ID=1039753 MISSING IN THE PAGE TABLE
 SELECT
     cl_from,
     cl_to
-FROM `wiki_staging`.`categorylinks`
-WHERE
-    cl_from != 1039753; -- MISSING IN THE PAGE TABLE
+FROM `wiki_staging`.`categorylinks`;
 
-INSERT INTO `pagelinks` (`pl_from`, `pl_namespace`, `pl_title`)
+INSERT IGNORE INTO `pagelinks` (`pl_from`, `pl_namespace`, `pl_title`) -- PAGE_ID=1039753 MISSING IN THE PAGE TABLE
 SELECT
     pl_from,
     pl_namespace,
     pl_title
 FROM `wiki_staging`.`pagelinks`
-WHERE
-    pl_from != 1039753; -- MISSING IN THE PAGE TABLE
 
 -- ADDITIONAL TABLES FOR THE API ENDPOINT
 

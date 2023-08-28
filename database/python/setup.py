@@ -1,27 +1,65 @@
 import mysql.connector
+from mysql.connector import cursor
 import sys
 import argparse
 import logging
+from argparse import Namespace
 
 logging.basicConfig(level=logging.INFO)
 
 
-def create_database(cursor, db_name):
+def create_database(cursor: cursor.MySQLCursor, db_name: str) -> None:
+    """
+    Creates a new database with the specified name if it doesn't exist.
+
+    Args:
+        cursor: The MySQL cursor to execute the query.
+        db_name: Name of the database to create.
+    """
     cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name};")
 
 
-def create_user(cursor, username, password):
+def create_user(cursor: cursor.MySQLCursor, username: str, password: str) -> None:
+    """
+    Creates a new user with the specified username and password if it doesn't exist.
+
+    Args:
+        cursor: The MySQL cursor to execute the query.
+        username: Name of the user to create.
+        password: Password for the user.
+    """
     cursor.execute(
         "CREATE USER IF NOT EXISTS %s@'%' IDENTIFIED BY %s;", (username, password)
     )
 
 
-def grant_privileges(cursor, privileges, db_name, username):
+def grant_privileges(
+    cursor: cursor.MySQLCursor, privileges: str, db_name: str, username: str
+) -> None:
+    """
+    Grants specified privileges on a database to a user.
+
+    Args:
+        cursor: The MySQL cursor to execute the query.
+        privileges: The privileges to grant.
+        db_name: Name of the database.
+        username: Name of the user to grant privileges to.
+    """
     query = f"GRANT {privileges} ON {db_name}.* TO %s@'%';"
     cursor.execute(query, (username,))
 
 
-def setup_database(args):
+def setup_database(args: Namespace) -> None:
+    """
+    Sets up the database:
+    1. Creates the databases (production and staging).
+    2. Creates the users (dev and api).
+    3. Grants privileges to the users.
+    4. Flushes the privileges.
+
+    Args:
+        args: Command line arguments containing database and user details.
+    """
     try:
         conn = mysql.connector.connect(
             host=args.host, user=args.root_user, password=args.root_password

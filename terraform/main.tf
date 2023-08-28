@@ -36,6 +36,15 @@ resource "google_service_networking_connection" "private_vpc_connection" {
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 }
 
+# VPC Connector Configuration
+resource "google_vpc_access_connector" "wiki_assistant_connector" {
+  name          = "wiki-assistant-connector"
+  region        = local.region
+  network       = google_compute_network.wiki_assistant_vpc.name
+  ip_cidr_range = "10.8.0.0/28"
+}
+
+
 # Firewall Rules
 
 # ICMP Firewall Rule
@@ -173,7 +182,7 @@ resource "google_compute_instance" "wiki_assistant_sql_connector" {
   }
 
   service_account {
-    email  = "872434643787-compute@developer.gserviceaccount.com"
+    email  = local.service_account
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 
@@ -190,7 +199,7 @@ resource "google_compute_instance" "wiki_assistant_sql_connector" {
 
 # Cloud Run Configuration
 
-# Docker Image
+# Docker Image Repository
 resource "google_artifact_registry_repository" "wiki_assistant_repo" {
   location      = "us-central1"
   repository_id = "wiki-assistant-repo"
@@ -206,7 +215,8 @@ resource "google_cloud_run_v2_service" "wiki_assistant_service" {
 
   template {
     vpc_access {
-      egress = "PRIVATE_RANGES_ONLY"
+      connector = google_vpc_access_connector.wiki_assistant_connector.id
+      egress    = "PRIVATE_RANGES_ONLY"
     }
 
     containers {
@@ -222,7 +232,7 @@ resource "google_cloud_run_v2_service" "wiki_assistant_service" {
 
       env {
         name  = "PROJECT_ID"
-        value = "wikipedia-assistant-397017"
+        value = local.project_id
       }
 
       env {
@@ -247,7 +257,7 @@ resource "google_cloud_run_v2_service" "wiki_assistant_service" {
     }
 
     max_instance_request_concurrency = 10
-    service_account                  = "872434643787-compute@developer.gserviceaccount.com"
+    service_account                  = local.service_account
   }
 
   traffic {
@@ -263,4 +273,65 @@ resource "google_cloud_run_v2_service_iam_binding" "wiki_assistant_service_publi
   location = google_cloud_run_v2_service.wiki_assistant_service.location
   role     = "roles/run.invoker"
   members  = ["allUsers"]
+}
+
+# Cloud Run Job Configuration
+resource "google_cloud_run_v2_job" "wiki_assistant_job" {
+  client   = "cloud-console"
+  name     = "wiki-assistant-update"
+  location = "us-central1"
+
+  labels = {}
+
+  template {
+    labels = {}
+
+    template {
+      service_account = local.service_account
+      max_retries     = 2
+      timeout         = "18000s"
+
+      vpc_access {
+        connector = google_vpc_access_connector.wiki_assistant_connector.id
+        egress    = "PRIVATE_RANGES_ONLY"
+      }
+
+      containers {
+        image   = "us-central1-docker.pkg.dev/wikipedia-assistant-397017/wiki-assistant-repo/wiki-assistant-update@sha256:a5eb085e3dc9a0f718fb4993455a68f0574739f61cde5d2ab8d72d72c9231f1b"
+        args    = []
+        command = []
+
+        resources {
+          limits = {
+            memory = "2Gi"
+            cpu    = "1000m"
+          }
+        }
+      }
+    }
+  }
+
+  timeouts {}
+}
+
+# Cloud Scheduler Configuration
+resource "google_cloud_scheduler_job" "wiki_assistant_update_scheduler" {
+  name        = "wiki-assistant-update-scheduler"
+  description = "Scheduler for the Cloud Run job responsible for monthly updates."
+  schedule    = "0 1 2 * *"
+  time_zone   = "UTC"
+
+  retry_config {
+    retry_count = 0
+  }
+
+  http_target {
+    http_method = "POST"
+    uri         = "https://us-central1-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/wikipedia-assistant-397017/jobs/wiki-assistant-update:run"
+
+    oauth_token {
+      service_account_email = local.service_account
+      scope                 = "https://www.googleapis.com/auth/cloud-platform"
+    }
+  }
 }

@@ -1,6 +1,7 @@
 locals {
-  project_id = "wikipedia-assistant-397017"
-  region     = "us-central1"
+  project_id      = "wikipedia-assistant-397017"
+  region          = "us-central1"
+  service_account = "872434643787-compute@developer.gserviceaccount.com"
 }
 
 data "google_secret_manager_secret_version" "db_password" {
