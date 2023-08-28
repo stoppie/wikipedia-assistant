@@ -8,7 +8,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 
 - The choice of MySQL for the database solution, given the structured nature of the data and the compatibility with the Wiki dump files created by MariaDB.
 - The periodic updates are set to occur monthly, based on the dump frequency from Wikimedia.
-- The database is not publicly exposed to ensure heightened security.
+- While the Wikimedia data used in this project is public, the database is configured without public exposure as a demonstration of best practices for data security. This design choice showcases the capability to build a solution with heightened security considerations.
 - Raw and processed data are kept in separate databases to segregate data and simplify management.
 - The provided API serves predefined query results, with some flexibility for custom SELECT queries.
 - **Data Integrity in Raw Tables:** It is observed that the raw `pagelinks` and `categorylinks` tables contain some rows where the `page_id` does not have a corresponding entry in the `page` table. Specifically, this discrepancy exists for a singular `page_id`. The foreign key constraint would thus be violated when attempting standard insertions. As a workaround, the `INSERT IGNORE INTO` statement is utilized when populating the `pagelinks` and `categorylinks` tables. While effective for the current setup, it's vital to note that this is not an ideal solution for a production environment and requires further refinements to address potential data integrity concerns.
@@ -30,7 +30,6 @@ With the aforementioned strategy, the `INSERT IGNORE INTO` mechanism serves a du
 ## 4. Requirements
 
 ### A. APIs to be Enabled:
-(Note: This list may not be comprehensive.)
 
 1. Cloud Run Admin API
 2. Compute Engine API
