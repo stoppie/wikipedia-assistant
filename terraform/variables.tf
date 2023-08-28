@@ -9,7 +9,7 @@ data "google_secret_manager_secret_version" "db_password" {
   version = "latest"
 }
 
-data "google_secret_manager_secret_version" "api_user" {
+data "google_secret_manager_secret_version" "api_user_pwd" {
   secret  = "wiki-assistant-db-api-user-password"
   version = "latest"
 }

@@ -249,7 +249,7 @@ resource "google_cloud_run_v2_service" "wiki_assistant_service" {
         name = "MYSQL_PWD"
         value_source {
           secret_key_ref {
-            secret  = data.google_secret_manager_secret_version.api_user.secret
+            secret  = data.google_secret_manager_secret_version.api_user_pwd.secret
             version = "latest"
           }
         }
