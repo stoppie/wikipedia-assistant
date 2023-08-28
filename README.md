@@ -2,7 +2,7 @@
 
 ## 1. General Description of the Solution
 
-The Wikipedia Assistant solution provides an automated way to download, preprocess, and store Simple English Wikipedia data in a structured MySQL database hosted on Google Cloud's Cloud SQL service. Furthermore, an API, served on Google Cloud Run, exposes data from this database to fulfill specific query requirements. Scheduled updates to the database are facilitated using Google Cloud Scheduler, and the solution is easily deployable thanks to infrastructure-as-code principles and containerization.
+The Wikipedia Assistant solution provides an automated way to download, preprocess, and store Simple English Wikipedia data in a structured MySQL database hosted on Google's Cloud SQL service. Furthermore, an API, served on Google Cloud Run, exposes data from this database to fulfill specific query requirements. Scheduled updates to the database are facilitated using Google Cloud Scheduler, and the solution is easily deployable thanks to infrastructure-as-code principles and containerization.
 
 ## 2. Assumptions and Simplifications
 
