@@ -4,7 +4,41 @@
 
 The Wikipedia Assistant solution provides an automated way to download, preprocess, and store Simple English Wikipedia data in a structured MySQL database hosted on Google's Cloud SQL service. Furthermore, an API, served on Google Cloud Run, exposes data from this database to fulfill specific query requirements. Scheduled updates to the database are facilitated using Google Cloud Scheduler, and the solution is easily deployable thanks to infrastructure-as-code principles and containerization.
 
-## 2. Technical Details and Assumptions
+## 2. Motivation
+
+The application is based on the following key technologies:
+
+### 1. Google Cloud Run Service for the API
+
+- **Scalability**: Automatically scales based on incoming traffic.
+- **Serverless**: Focus on code, not infrastructure.
+- **Cost-effective**: Pay only for the compute time consumed.
+
+### 2. Cloud Run Job for Monthly Updates
+
+- **Ephemeral Tasks**: Perfect for database updates.
+- **Serverless**: As with Cloud Run, there's no infrastructure to manage.
+
+### 3. Cloud Scheduler for Monthly Updates
+
+- **Simplicity**: While Cloud Composer is a powerful tool, it's more suited for complex workflows, making it overkill for the requirements.
+
+### 4. Docker Images
+
+- **Portability**: Ensures uniform behavior across systems.
+- **Versioning**: Easy rollbacks and updates.
+- **Optimized**: Only package what's necessary.
+
+### 5. Benefits
+
+By employing the above technologies, the solution is:
+
+- **Scalable**: Adapts to both low and peak traffic loads.
+- **Cost-Efficient**: No over-provisioning costs.
+- **Low Maintenance**: Thanks to serverless and managed services.
+- **Consistent**: Docker ensures consistent behavior everywhere.
+
+## 3. Technical Details and Assumptions
 
 - **Database Selection:** MySQL was chosen due to its structured data handling capabilities and compatibility with Wiki dump files produced by MariaDB.
 
@@ -26,7 +60,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 
 - **Infrastructure Oversight:** Terraform outlines the infrastructure, ensuring auditable, versioned changes.
 
-## 3. Implemented Security Measures
+## 4. Implemented Security Measures
 
 1. **Database Accessibility:** Despite the public nature of Wikimedia data, the database is designed without public exposure, emphasizing best data security practices.
   
@@ -42,7 +76,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
    * ICMP: Allows ICMP traffic.
    * SSH: Permits SSH access solely from a designated source IP.
 
-## 4. Infrastructure Configuration
+## 5. Infrastructure Configuration
 
 ### 1. **Provider Configuration**
    - Google Cloud provider is used with version constraint `~> 4.0`.
@@ -77,7 +111,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 
 **Note**: The overall design is focused on ensuring secure and efficient communication between services and the private Cloud SQL instance. The use of VPC peering, VPC access connectors, and specific firewall rules ensure that the database remains isolated from public access, while still being accessible to necessary services within the project.
 
-## 5. Requirements
+## 6. Requirements
 
 ### A. APIs to be Enabled:
 
@@ -105,7 +139,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 - `roles/secretmanager.viewer`
 - `roles/vpcaccess.admin`
 
-## 6. Instructions on How to Deploy
+## 7. Instructions on How to Deploy
 
 ### Prerequisites:
 
