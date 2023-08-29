@@ -7,30 +7,28 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 ## 2. Technical Details and Assumptions
 
 - **Database Selection:** MySQL was chosen due to its structured data handling capabilities and compatibility with Wiki dump files produced by MariaDB.
-  
-- **Update Protocol:** Updates are scheduled monthly, aligning with Wikimedia's dump release frequency.
 
 - **Database Designation:** Two distinct databases differentiate production (`wiki_assistant`) and staging (`wiki_staging`) data.
 
-- **API Capabilities:** The API returns predefined query results and also offers flexibility for custom SELECT queries.
+- **Database Relationships:** `pagelinks` and `categorylinks` tables include foreign keys linking to the `page` table, enhancing data consistency.
 
 - **Data Integrity and Constraints:** The raw `pagelinks` and `categorylinks` tables have discrepancies. Specifically, certain rows in these tables reference a `page_id` that doesn't exist in the `page` table. The `INSERT IGNORE INTO` statement is employed to bypass foreign key constraint violations. However, this method, though functional now, isn't ideal for long-term production use.
-
-- **Database Relationships:** `pagelinks` and `categorylinks` tables include foreign keys linking to the `page` table, enhancing data consistency.
 
 - **Data Processes:** 
   * The `pageoutdatedness` table is formed by gauging the maximum time gap between updates of related pages.
   * The `categoryoutdated` table sorts pages based on outdatedness within categories, pinpointing the most outdated page per category.
 
+- **Update Protocol:** Updates are scheduled monthly, aligning with Wikimedia's dump release frequency.
+
 - **Data Handling:** Uniform files and scripts cater to both initial data configuration and periodic refreshes.
 
-- **Deployment Strategy:** The API, hosted on Cloud Run Service, benefits from managed security and scalability.
+- **API Deployment:** The API, hosted on Cloud Run Service, benefits from managed security and scalability.
 
 - **Infrastructure Oversight:** Terraform outlines the infrastructure, ensuring auditable, versioned changes.
 
 ## 3. Implemented Security Measures
 
-1. **Database Accessibility:** The Cloud SQL instance is bound only to a private IP, bolstering security by prohibiting public access.
+1. **Database Accessibility:** Despite the public nature of Wikimedia data, the database is designed without public exposure, emphasizing best data security practices.
   
 2. **VM Access Control:** The virtual machine, instrumental for database operations, accepts connections solely from a specific external IP.
 
@@ -40,9 +38,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 
 4. **Guarding Against SQL Injection:** The API's custom SQL endpoint only supports SELECT queries, reducing SQL injection threats.
 
-5. **Security Measures:** Despite the public nature of Wikimedia data, the database is designed without public exposure, emphasizing best data security practices.
-
-6. **Network Rules:** Firewall configurations include:
+5. **Network Rules:** Firewall configurations include:
    * ICMP: Allows ICMP traffic.
    * SSH: Permits SSH access solely from a designated source IP.
 
