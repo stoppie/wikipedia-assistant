@@ -52,7 +52,7 @@ SELECT
     pl_from,
     pl_namespace,
     pl_title
-FROM `wiki_staging`.`pagelinks`
+FROM `wiki_staging`.`pagelinks`;
 
 -- ADDITIONAL TABLES FOR THE API ENDPOINT
 

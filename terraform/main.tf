@@ -297,7 +297,7 @@ resource "google_cloud_run_v2_job" "wiki_assistant_job" {
       }
 
       containers {
-        image   = "us-central1-docker.pkg.dev/wikipedia-assistant-397017/wiki-assistant-repo/wiki-assistant-update@sha256:a5eb085e3dc9a0f718fb4993455a68f0574739f61cde5d2ab8d72d72c9231f1b"
+        image   = "us-central1-docker.pkg.dev/wikipedia-assistant-397017/wiki-assistant-repo/wiki-assistant-update@sha256:26fd0eddd845ccd54494ebb3f89592f5babf188fa0ec361fcf444a0ba6e8f549"
         args    = []
         command = []
 
