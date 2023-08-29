@@ -45,6 +45,7 @@ BEGIN
     -- Start transaction
     START TRANSACTION;
 
+    ALTER TABLE `page` DISABLE KEYS;
     INSERT INTO `page` (`page_id`, `page_namespace`, `page_title`, `page_touched`)
     SELECT
         page_id,
@@ -56,19 +57,25 @@ BEGIN
         page_namespace = VALUES(page_namespace),
         page_title = VALUES(page_title),
         page_touched = VALUES(page_touched);
+    ALTER TABLE `page` ENABLE KEYS;
 
+    ALTER TABLE `categorylinks` DISABLE KEYS;
     INSERT IGNORE INTO `categorylinks` (`cl_from`, `cl_to`) -- PAGE_ID=1039753 MISSING IN THE PAGE TABLE
     SELECT
         cl_from,
         cl_to
     FROM `wiki_staging`.`categorylinks`;
+    ALTER TABLE `categorylinks` ENABLE KEYS;
 
+    ALTER TABLE `pagelinks` DISABLE KEYS;
     INSERT IGNORE INTO `pagelinks` (`pl_from`, `pl_namespace`, `pl_title`) -- PAGE_ID=1039753 MISSING IN THE PAGE TABLE
     SELECT
         pl_from,
         pl_namespace,
         pl_title
     FROM `wiki_staging`.`pagelinks`;
+    ALTER TABLE `pagelinks` ENABLE KEYS;
+
     COMMIT;
 END;
 //
@@ -107,6 +114,7 @@ BEGIN
         PRIMARY KEY (`category`)
     );
 
+    ALTER TABLE `pageoutdatedness` DISABLE KEYS;
     INSERT INTO `pageoutdatedness` (`page_id`, `page_behind`)
     SELECT
         p_source.page_id,
@@ -121,7 +129,9 @@ BEGIN
         p_source.page_id
     HAVING
         MAX(TIMESTAMPDIFF(SECOND, p_target.page_touched, p_source.page_touched)) > 0;
+    ALTER TABLE `pageoutdatedness` ENABLE KEYS;
 
+    ALTER TABLE `categoryoutdated` DISABLE KEYS;
     INSERT INTO `categoryoutdated` (`category`, `page_id`, `page_namespace`, `page_title`, `page_outdatedness`)
     WITH categorycounts AS (
         SELECT
@@ -157,6 +167,8 @@ BEGIN
     ORDER BY
         cc.cnt DESC
     LIMIT 10;
+    ALTER TABLE `categoryoutdated` ENABLE KEYS;
+    
     COMMIT;
 END;
 //
