@@ -42,7 +42,42 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
    * ICMP: Allows ICMP traffic.
    * SSH: Permits SSH access solely from a designated source IP.
 
-## 4. Requirements
+## 5. Infrastructure Configuration
+
+### 1. **Provider Configuration**
+   - Google Cloud provider is used with version constraint `~> 4.0`.
+  
+### 2. **Networking**
+   - A VPC network named `wiki-assistant-vpc` is created.
+   - A global internal address is configured for VPC peering, aimed at connecting with Cloud SQL.
+   - VPC Peering is set up to Google services using the above-defined private IP range.
+   - A VPC Access Connector is provisioned, allowing for connections between Cloud Run services and VPC resources.
+
+### 3. **Firewall Rules**
+   - Two ingress firewall rules are set up: 
+     * One to allow ICMP traffic.
+     * Another to permit SSH access from a specific source IP.
+
+### 4. **Database Configuration**
+   - A MySQL instance (`wiki-assistant-db`) is created in Google Cloud SQL. 
+   - This instance is only accessible via a private IP in the `wiki-assistant-vpc`, ensuring enhanced security.
+   - Various configurations such as backup settings, IP configurations, and maintenance window are detailed.
+
+### 5. **Compute Instances**
+   - A compute instance (`wiki-assistant-sql-connector`) is deployed to facilitate database operations.
+  
+### 6. **Cloud Run**
+   - A Docker image repository is created in the Artifact Registry.
+   - A Cloud Run service (`wiki-assistant`) is defined, which utilizes the VPC Access Connector to interact with VPC resources securely.
+   - This service's endpoint is made publicly accessible.
+   - A Cloud Run job (`wiki-assistant-update`) is also defined for monthly update operations.
+
+### 7. **Cloud Scheduler**
+   - A Cloud Scheduler job (`wiki-assistant-update-scheduler`) is established to trigger the Cloud Run job at regular intervals.
+
+**Note**: The overall design is focused on ensuring secure and efficient communication between services and the private Cloud SQL instance. The use of VPC peering, VPC access connectors, and specific firewall rules ensure that the database remains isolated from public access, while still being accessible to necessary services within the project.
+
+## 6. Requirements
 
 ### A. APIs to be Enabled:
 
@@ -70,7 +105,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 - `roles/secretmanager.viewer`
 - `roles/vpcaccess.admin`
 
-## 5. Instructions on How to Deploy
+## 7. Instructions on How to Deploy
 
 ### Prerequisites:
 
