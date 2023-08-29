@@ -42,7 +42,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
    * ICMP: Allows ICMP traffic.
    * SSH: Permits SSH access solely from a designated source IP.
 
-## 5. Infrastructure Configuration
+## 4. Infrastructure Configuration
 
 ### 1. **Provider Configuration**
    - Google Cloud provider is used with version constraint `~> 4.0`.
@@ -77,7 +77,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 
 **Note**: The overall design is focused on ensuring secure and efficient communication between services and the private Cloud SQL instance. The use of VPC peering, VPC access connectors, and specific firewall rules ensure that the database remains isolated from public access, while still being accessible to necessary services within the project.
 
-## 6. Requirements
+## 5. Requirements
 
 ### A. APIs to be Enabled:
 
@@ -105,7 +105,7 @@ The Wikipedia Assistant solution provides an automated way to download, preproce
 - `roles/secretmanager.viewer`
 - `roles/vpcaccess.admin`
 
-## 7. Instructions on How to Deploy
+## 6. Instructions on How to Deploy
 
 ### Prerequisites:
 
